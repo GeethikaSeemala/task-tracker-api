@@ -1,0 +1,919 @@
+openapi: 3.0.3
+info:
+  title: Task Tracker API
+  version: 1.0.0
+  description: Spring Boot project and task management service. No authentication.
+    PUT performs full replacement; see README for documented assumptions.
+servers:
+- url: http://localhost:8080
+tags:
+- name: Project
+- name: User
+- name: Task
+- name: Info
+paths:
+  /api/projects:
+    post:
+      tags:
+      - Project
+      operationId: createProject
+      summary: Create project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponse'
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URI of created resource
+        '400':
+          description: Invalid request, validation, enum, date or pagination
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Duplicate value or existing task reference
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    get:
+      tags:
+      - Project
+      operationId: listProjects
+      summary: List projects
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+        description: Defaults to pagination.default-page-size (20 in supplied configuration).
+      - name: sort
+        in: query
+        schema:
+          type: string
+          default: id,asc
+        description: 'field[,asc|desc]. Allowed fields: id, name, createdAt. ID breaks
+          ties.'
+      responses:
+        '200':
+          description: Paginated results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectPage'
+        '400':
+          description: Invalid request, validation, enum, date or pagination
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /api/projects/{id}:
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+      description: Entity ID
+    get:
+      tags:
+      - Project
+      operationId: getProject
+      summary: Get project
+      responses:
+        '200':
+          description: Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponse'
+        '400':
+          description: Invalid request, validation, enum, date or pagination
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: Entity or referenced entity not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    put:
+      tags:
+      - Project
+      operationId: updateProject
+      summary: Replace project
+      description: 'Full replacement: required fields must be supplied. Omitted optional
+        fields are cleared; task status and priority use their defaults.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponse'
+        '400':
+          description: Invalid request, validation, enum, date or pagination
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: Entity or referenced entity not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Duplicate value or existing task reference
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    delete:
+      tags:
+      - Project
+      operationId: deleteProject
+      summary: Delete project
+      description: Deletion is rejected while tasks reference this entity.
+      responses:
+        '204':
+          description: Deleted; empty response
+        '400':
+          description: Invalid request, validation, enum, date or pagination
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: Entity or referenced entity not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Duplicate value or existing task reference
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /api/users:
+    post:
+      tags:
+      - User
+      operationId: createUser
+      summary: Create user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URI of created resource
+        '400':
+          description: Invalid request, validation, enum, date or pagination
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Duplicate value or existing task reference
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    get:
+      tags:
+      - User
+      operationId: listUsers
+      summary: List users
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+        description: Defaults to pagination.default-page-size (20 in supplied configuration).
+      - name: sort
+        in: query
+        schema:
+          type: string
+          default: id,asc
+        description: 'field[,asc|desc]. Allowed fields: id, name, email, role. ID
+          breaks ties.'
+      responses:
+        '200':
+          description: Paginated results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPage'
+        '400':
+          description: Invalid request, validation, enum, date or pagination
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /api/users/{id}:
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+      description: Entity ID
+    get:
+      tags:
+      - User
+      operationId: getUser
+      summary: Get user
+      responses:
+        '200':
+          description: Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Invalid request, validation, enum, date or pagination
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: Entity or referenced entity not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    put:
+      tags:
+      - User
+      operationId: updateUser
+      summary: Replace user
+      description: 'Full replacement: required fields must be supplied. Omitted optional
+        fields are cleared; task status and priority use their defaults.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Invalid request, validation, enum, date or pagination
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: Entity or referenced entity not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Duplicate value or existing task reference
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    delete:
+      tags:
+      - User
+      operationId: deleteUser
+      summary: Delete user
+      description: Deletion is rejected while tasks reference this entity.
+      responses:
+        '204':
+          description: Deleted; empty response
+        '400':
+          description: Invalid request, validation, enum, date or pagination
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: Entity or referenced entity not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Duplicate value or existing task reference
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /api/tasks:
+    post:
+      tags:
+      - Task
+      operationId: createTask
+      summary: Create task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URI of created resource
+        '400':
+          description: Invalid request, validation, enum, date or pagination
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: Entity or referenced entity not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Duplicate value or existing task reference
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    get:
+      tags:
+      - Task
+      operationId: listTasks
+      summary: List tasks
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+        description: Defaults to pagination.default-page-size (20 in supplied configuration).
+      - name: sort
+        in: query
+        schema:
+          type: string
+          default: id,asc
+        description: 'field[,asc|desc]. Allowed fields: id, title, status, priority,
+          dueDate. ID breaks ties.'
+      - name: status
+        in: query
+        schema:
+          $ref: '#/components/schemas/Status'
+      - name: projectId
+        in: query
+        schema:
+          type: integer
+          format: int64
+        description: Existing project ID; unknown project returns 404.
+      responses:
+        '200':
+          description: Paginated results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskPage'
+        '400':
+          description: Invalid request, validation, enum, date or pagination
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: Entity or referenced entity not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /api/tasks/{id}:
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+      description: Entity ID
+    get:
+      tags:
+      - Task
+      operationId: getTask
+      summary: Get task
+      responses:
+        '200':
+          description: Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '400':
+          description: Invalid request, validation, enum, date or pagination
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: Entity or referenced entity not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    put:
+      tags:
+      - Task
+      operationId: updateTask
+      summary: Replace task
+      description: 'Full replacement: required fields must be supplied. Omitted optional
+        fields are cleared; task status and priority use their defaults.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '400':
+          description: Invalid request, validation, enum, date or pagination
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: Entity or referenced entity not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Duplicate value or existing task reference
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    delete:
+      tags:
+      - Task
+      operationId: deleteTask
+      summary: Delete task
+      description: Deletes the task only.
+      responses:
+        '204':
+          description: Deleted; empty response
+        '400':
+          description: Invalid request, validation, enum, date or pagination
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: Entity or referenced entity not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /api/projects/{id}/tasks:
+    get:
+      tags:
+      - Project
+      operationId: listProjectTasks
+      summary: List tasks for an existing project
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+        description: Entity ID
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+        description: Defaults to pagination.default-page-size (20 in supplied configuration).
+      - name: sort
+        in: query
+        schema:
+          type: string
+          default: id,asc
+        description: 'field[,asc|desc]. Allowed fields: id, title, status, priority,
+          dueDate. ID breaks ties.'
+      responses:
+        '200':
+          description: Paginated project tasks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskPage'
+        '400':
+          description: Invalid request, validation, enum, date or pagination
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: Entity or referenced entity not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /api/info:
+    get:
+      tags:
+      - Info
+      operationId: getInfo
+      summary: Read externally configured application name and version
+      responses:
+        '200':
+          description: Application information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Info'
+components:
+  schemas:
+    ProjectRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 150
+          example: Media Platform
+        description:
+          type: string
+          maxLength: 2000
+          nullable: true
+      required:
+      - name
+    UserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 150
+          example: Geethika
+        email:
+          type: string
+          format: email
+          maxLength: 254
+          example: geethika@example.com
+        role:
+          type: string
+          maxLength: 50
+          nullable: true
+          example: DEVELOPER
+      required:
+      - name
+      - email
+    TaskRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: Implement API
+        status:
+          allOf:
+          - $ref: '#/components/schemas/Status'
+          nullable: true
+          description: Defaults to TODO if omitted or null, including PUT.
+        priority:
+          allOf:
+          - $ref: '#/components/schemas/Priority'
+          nullable: true
+          description: Defaults to configured task.default-priority if omitted or
+            null, including PUT.
+        projectId:
+          type: integer
+          format: int64
+          minimum: 1
+          example: 1
+        assigneeId:
+          type: integer
+          format: int64
+          minimum: 1
+          nullable: true
+          example: 1
+        dueDate:
+          type: string
+          format: date
+          nullable: true
+          example: '2030-01-15'
+      required:
+      - title
+      - projectId
+    Status:
+      type: string
+      enum:
+      - TODO
+      - IN_PROGRESS
+      - DONE
+    Priority:
+      type: string
+      enum:
+      - LOW
+      - MEDIUM
+      - HIGH
+    Info:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Task Tracker API
+        version:
+          type: string
+          example: 1.0.0
+      required:
+      - name
+      - version
+    ApiError:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+          example: 400
+        error:
+          type: string
+          example: Bad Request
+        message:
+          type: string
+          example: Request validation failed
+        path:
+          type: string
+          example: /api/tasks
+        fieldErrors:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            projectId: must not be null
+      required:
+      - timestamp
+      - status
+      - error
+      - message
+      - path
+      - fieldErrors
+    ProjectResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        name:
+          type: string
+          minLength: 1
+          maxLength: 150
+          example: Media Platform
+        description:
+          type: string
+          maxLength: 2000
+          nullable: true
+        createdAt:
+          type: string
+          description: Server local time without offset
+          example: '2026-10-23T10:00:00'
+          pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$
+      required:
+      - id
+      - name
+      - description
+      - createdAt
+    ProjectPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectResponse'
+        page:
+          type: integer
+          minimum: 0
+        size:
+          type: integer
+          minimum: 1
+          maximum: 100
+        totalElements:
+          type: integer
+          format: int64
+          minimum: 0
+        totalPages:
+          type: integer
+          minimum: 0
+      required:
+      - content
+      - page
+      - size
+      - totalElements
+      - totalPages
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        name:
+          type: string
+          minLength: 1
+          maxLength: 150
+          example: Geethika
+        email:
+          type: string
+          format: email
+          maxLength: 254
+          example: geethika@example.com
+        role:
+          type: string
+          maxLength: 50
+          nullable: true
+          example: DEVELOPER
+      required:
+      - id
+      - name
+      - email
+      - role
+    UserPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserResponse'
+        page:
+          type: integer
+          minimum: 0
+        size:
+          type: integer
+          minimum: 1
+          maximum: 100
+        totalElements:
+          type: integer
+          format: int64
+          minimum: 0
+        totalPages:
+          type: integer
+          minimum: 0
+      required:
+      - content
+      - page
+      - size
+      - totalElements
+      - totalPages
+    TaskResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: Implement API
+        status:
+          $ref: '#/components/schemas/Status'
+        priority:
+          $ref: '#/components/schemas/Priority'
+        projectId:
+          type: integer
+          format: int64
+          minimum: 1
+          example: 1
+        assigneeId:
+          type: integer
+          format: int64
+          minimum: 1
+          nullable: true
+          example: 1
+        dueDate:
+          type: string
+          format: date
+          nullable: true
+          example: '2030-01-15'
+      required:
+      - id
+      - title
+      - status
+      - priority
+      - projectId
+      - assigneeId
+      - dueDate
+    TaskPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskResponse'
+        page:
+          type: integer
+          minimum: 0
+        size:
+          type: integer
+          minimum: 1
+          maximum: 100
+        totalElements:
+          type: integer
+          format: int64
+          minimum: 0
+        totalPages:
+          type: integer
+          minimum: 0
+      required:
+      - content
+      - page
+      - size
+      - totalElements
+      - totalPages
